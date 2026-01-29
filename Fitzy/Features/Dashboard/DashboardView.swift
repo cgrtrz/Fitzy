@@ -1,8 +1,19 @@
 import SwiftUI
+import CoreData
 
 struct DashboardView: View {
     
-    @State private var weight: Int = 88
+    @State private var weight: Double = 88
+    
+    @StateObject private var cdmanager = CoreDataManager.shared
+    
+    let numberFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.locale = Locale.current   // TR için virgül/dot uyumu
+        return formatter
+    }()
+
     
     var body: some View {
         VStack {
@@ -16,6 +27,8 @@ struct DashboardView: View {
                     header
                     
                     currentWeight(88.6)
+                    
+                    Text(cdmanager.todayEntry?.weightKg.description ?? "--")
                     
 //                    Spacer()
                 }
@@ -31,8 +44,24 @@ struct DashboardView: View {
                 
 //            }
             
-            CurrentWeightView(weight: 88.6)
+
+            TextField("Enter weight", value: $weight, formatter: numberFormatter)
             
+            Button("Save") {
+                cdmanager.upsertEntry(date: Date(), weightKg: weight)
+            }
+            
+            VStack {
+                ForEach(cdmanager.recentEntries) { entry in
+                    Text(entry.weightKg.description)
+                }
+            }
+            
+            
+            
+            Spacer()
+            
+//            AnalogScaleView(currentWeight: 88.6)
             
             Spacer()
         }
@@ -73,6 +102,7 @@ struct DashboardView: View {
 
 #Preview {
     DashboardView()
+        .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
 }
 
 
